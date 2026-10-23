@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PENGHUNISURGA - Pengatur Keuangan Neomorphism</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js for visualizations -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #e0e5ec;
+            color: #4a5568;
+        }
+
+        /* Neorphism Shadows & Styles */
+        .neo-card {
+            background: #e0e5ec;
+            box-shadow: 9px 9px 16px #a3b1c6, -9px -9px 16px #ffffff;
+            border-radius: 1.5rem;
+        }
+
+        .neo-card-sm {
+            background: #e0e5ec;
+            box-shadow: 6px 6px 12px #a3b1c6, -6px -6px 12px #ffffff;
+            border-radius: 1rem;
+        }
+
+        .neo-inset {
+            background: #e0e5ec;
+            box-shadow: inset 4px 4px 8px #a3b1c6, inset -4px -4px 8px #ffffff;
+            border-radius: 0.75rem;
+        }
+
+        .neo-button {
+            background: #e0e5ec;
+            box-shadow: 5px 5px 10px #a3b1c6, -5px -5px 10px #ffffff;
+            transition: all 0.2s ease;
+            border-radius: 0.75rem;
+        }
+
+        .neo-button:hover {
+            box-shadow: 2px 2px 5px #a3b1c6, -2px -2px 5px #ffffff;
+        }
+
+        .neo-button:active, .neo-button.active {
+            box-shadow: inset 3px 3px 6px #a3b1c6, inset -3px -3px 6px #ffffff;
+        }
+
+        .neo-input {
+            background: #e0e5ec;
+            box-shadow: inset 3px 3px 6px #a3b1c6, inset -3px -3px 6px #ffffff;
+            border: none;
+            outline: none;
+            border-radius: 0.75rem;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-4 sm:p-6 md:p-8 flex flex-col justify-between">
+
+    <!-- LOGIN SCREEN -->
+    <div id="login-screen" class="fixed inset-0 z-50 flex items-center justify-center bg-[#e0e5ec] p-4">
+        <div class="neo-card p-8 w-full max-w-md">
+            <div class="text-center mb-6">
+                <div class="inline-flex items-center justify-center w-16 h-16 neo-inset mb-3 text-indigo-600 text-2xl font-bold">
+                    <i class="fa-solid fa-wallet"></i>
+                </div>
+                <h1 class="text-2xl font-bold text-gray-700 tracking-wider">PENGHUNISURGA</h1>
+                <p class="text-xs text-gray-500 mt-1">Sistem Manajemen Keuangan Pribadi</p>
+            </div>
+
+            <form id="login-form" onsubmit="handleLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-gray-600 mb-1 ml-1">URL Web App Google Apps Script</label>
+                    <input type="url" id="gas-url" required placeholder="https://script.google.com/macros/s/.../exec" class="neo-input w-full px-4 py-3 text-sm text-gray-700" value="">
+                    <p class="text-[10px] text-gray-400 mt-1 ml-1">Masukkan URL Deployment Google Apps Script Anda.</p>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-gray-600 mb-1 ml-1">Username</label>
+                    <input type="text" id="login-username" required placeholder="admin" class="neo-input w-full px-4 py-3 text-sm text-gray-700">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-gray-600 mb-1 ml-1">Password</label>
+                    <input type="password" id="login-password" required placeholder="••••••••" class="neo-input w-full px-4 py-3 text-sm text-gray-700">
+                </div>
+                <button type="submit" id="login-btn" class="neo-button w-full py-3 font-semibold text-indigo-600 hover:text-indigo-800 transition">
+                    MASUK APLIKASI
+                </button>
+            </form>
+            <div id="login-message" class="mt-4 text-center text-xs text-red-500 font-medium"></div>
+            
+            <div class="mt-6 pt-4 border-t border-gray-300/55 text-center">
+                <p class="text-[11px] text-gray-400">Catatan: Default akun baru (Username: <b>admin</b>, Password: <b>admin123</b>) akan otomatis dibuat saat pertama kali setup spreadsheet.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN APP WRAPPER -->
+    <div id="app-container" class="max-w-7xl mx-auto w-full space-y-6 hidden">
+        
+        <!-- HEADER SECTION -->
+        <header class="neo-card p-4 sm:p-6 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 neo-inset flex items-center justify-center text-indigo-600 text-xl font-bold rounded-xl">
+                    <i class="fa-solid fa-coins"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-black text-gray-700 tracking-wide">PENGHUNISURGA</h1>
+                    <p class="text-xs text-gray-500 font-medium">Platform Arus Kas & Kebebasan Finansial</p>
+                </div>
+            </div>
+
+            <!-- Real-time Clock & Date -->
+            <div class="neo-inset px-6 py-2 flex items-center gap-4 text-sm font-semibold text-gray-600">
+                <div class="flex items-center gap-2">
+                    <i class="fa-regular fa-calendar-days text-indigo-500"></i>
+                    <span id="current-date">Memuat tanggal...</span>
+                </div>
+                <div class="h-4 w-[1px] bg-gray-400"></div>
+                <div class="flex items-center gap-2">
+                    <i class="fa-regular fa-clock text-indigo-500"></i>
+                    <span id="current-time">00:00:00</span>
+                </div>
+            </div>
+
+            <!-- User Info & Logout -->
+            <div class="flex items-center gap-3">
+                <div class="text-right hidden sm:block">
+                    <div id="display-user" class="text-xs font-bold text-gray-700">User</div>
+                    <div class="text-[10px] text-emerald-600 font-medium">Online (Cloud GAS)</div>
+                </div>
+                <button onclick="logout()" class="neo-button px-4 py-2 text-xs font-bold text-red-500 hover:text-red-700" title="Keluar">
+                    <i class="fa-solid fa-power-off"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- MOTIVATION WIDGET -->
+        <div class="neo-card p-4 bg-gradient-to-r from-[#e0e5ec] to-[#d4dc8] border-l-4 border-indigo-500 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="text-indigo-600 text-xl pl-2">
+                    <i class="fa-solid fa-lightbulb"></i>
+                </div>
+                <div>
+                    <span class="text-[10px] uppercase tracking-wider font-bold text-indigo-600">Motivasi Menabung Hari Ini</span>
+                    <p id="motivation-text" class="text-xs sm:text-sm font-medium text-gray-700 italic">"Menabung bukan soal berapa banyak uang yang kita sisakan, tapi konsistensi dalam menyisihkannya."</p>
+                </div>
+            </div>
+            <button onclick="rotateMotivation()" class="neo-button px-3 py-1 text-xs text-gray-500 hover:text-indigo-600 hidden sm:block">
+                <i class="fa-solid fa-rotate"></i> Ganti
+            </button>
+        </div>
+
+        <!-- DASHBOARD SUMMARY CARDS -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Saldo -->
+            <div class="neo-card p-6 flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Total Saldo Utama</p>
+                    <h2 id="summary-balance" class="text-2xl sm:text-3xl font-black text-indigo-600 mt-1">Rp 0</h2>
+                </div>
+                <div class="w-14 h-14 neo-inset rounded-2xl flex items-center justify-center text-indigo-500 text-2xl">
+                    <i class="fa-solid fa-wallet"></i>
+                </div>
+            </div>
+            <!-- Pemasukan -->
+            <div class="neo-card p-6 flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Total Pemasukan</p>
+                    <h2 id="summary-income" class="text-2xl sm:text-3xl font-black text-emerald-600 mt-1">Rp 0</h2>
+                </div>
+                <div class="w-14 h-14 neo-inset rounded-2xl flex items-center justify-center text-emerald-500 text-2xl">
+                    <i class="fa-solid fa-arrow-trend-up"></i>
+                </div>
+            </div>
+            <!-- Pengeluaran -->
+            <div class="neo-card p-6 flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Total Pengeluaran</p>
+                    <h2 id="summary-expense" class="text-2xl sm:text-3xl font-black text-rose-600 mt-1">Rp 0</h2>
+                </div>
+                <div class="w-14 h-14 neo-inset rounded-2xl flex items-center justify-center text-rose-500 text-2xl">
+                    <i class="fa-solid fa-arrow-trend-down"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- MAIN CONTENT AREA: FORM & CHARTS -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <!-- INPUT TRANSAKSI FORM -->
+            <div class="neo-card p-6 lg:col-span-1 space-y-4">
+                <h3 class="text-sm font-bold uppercase tracking-wider text-gray-700 flex items-center gap-2">
+                    <i class="fa-solid fa-plus-circle text-indigo-600"></i> Catat Transaksi Baru
+                </h3>
+                
+                <form id="transaction-form" onsubmit="handleAddTransaction(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1 ml-1">Tipe Transaksi</label>
+                        <div class="grid grid-cols-2 gap-3">
+                            <button type="button" id="type-income" onclick="setTxType('Pemasukan')" class="neo-button py-2 text-xs font-bold text-emerald-600 active">Pemasukan</button>
+                            <button type="button" id="type-expense" onclick="setTxType('Pengeluaran')" class="neo-button py-2 text-xs font-bold text-rose-600">Pengeluaran</button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1 ml-1">Nominal (Rp)</label>
+                        <input type="number" id="tx-amount" required min="1" placeholder="Contoh: 50000" class="neo-input w-full px-4 py-3 text-sm text-gray-700 font-medium">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1 ml-1">Kategori</label>
+                        <select id="tx-category" class="neo-input w-full px-4 py-3 text-sm text-gray-700 bg-transparent">
+                            <option value="Gaji / Pendapatan">Gaji / Pendapatan</option>
+                            <option value="Makanan & Minuman">Makanan & Minuman</option>
+                            <option value="Transportasi">Transportasi</option>
+                            <option value="Belanja & Kebutuhan">Belanja & Kebutuhan</option>
+                            <option value="Investasi & Tabungan">Investasi & Tabungan</option>
+                            <option value="Hiburan & Lainnya">Hiburan & Lainnya</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1 ml-1">Tanggal</label>
+                        <input type="date" id="tx-date" required class="neo-input w-full px-4 py-3 text-sm text-gray-700">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1 ml-1">Catatan (Opsional)</label>
+                        <input type="text" id="tx-notes" placeholder="Contoh: Beli makan siang" class="neo-input w-full px-4 py-3 text-sm text-gray-700">
+                    </div>
+
+                    <button type="submit" id="submit-tx-btn" class="neo-button w-full py-3 text-xs font-bold uppercase tracking-wider text-indigo-600 hover:text-indigo-800">
+                        Simpan Transaksi
+                    </button>
+                </form>
+            </div>
+
+            <!-- VISUALISASI GRAFIK -->
+            <div class="neo-card p-6 lg:col-span-2 space-y-4 flex flex-col justify-between">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-sm font-bold uppercase tracking-wider text-gray-700 flex items-center gap-2">
+                        <i class="fa-solid fa-chart-line text-indigo-600"></i> Analisis Tren Arus Kas
+                    </h3>
+                    <span class="text-xs text-gray-400 font-medium">Pemasukan vs Pengeluaran</span>
+                </div>
+                
+                <div class="w-full h-72 neo-inset p-4 flex items-center justify-center relative">
+                    <canvas id="cashflowChart"></canvas>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- RIWAYAT TRANSAKSI TABLE -->
+        <div class="neo-card p-6 space-y-4">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <h3 class="text-sm font-bold uppercase tracking-wider text-gray-700 flex items-center gap-2">
+                    <i class="fa-solid fa-clock-rotate-left text-indigo-600"></i> Riwayat Transaksi Terakhir
+                </h3>
+                <div class="flex items-center gap-2 w-full sm:w-auto">
+                    <input type="text" id="search-tx" oninput="filterTransactions()" placeholder="Cari catatan/kategori..." class="neo-input px-4 py-2 text-xs text-gray-700 w-full sm:w-64">
+                    <button onclick="fetchTransactions()" class="neo-button px-4 py-2 text-xs font-bold text-indigo-600" title="Muat Ulang Data">
+                        <i class="fa-solid fa-rotate"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto neo-inset rounded-xl">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="border-b border-gray-300/60 text-xs font-bold text-gray-600 uppercase tracking-wider">
+                            <th class="p-4">Tanggal</th>
+                            <th class="p-4">Tipe</th>
+                            <th class="p-4">Kategori</th>
+                            <th class="p-4">Nominal</th>
+                            <th class="p-4">Catatan</th>
+                            <th class="p-4 text-center">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transaction-table-body" class="text-xs text-gray-600">
+                        <tr>
+                            <td colspan="6" class="p-6 text-center text-gray-400">Memuat data dari Google Sheets...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="mt-8 text-center text-[11px] text-gray-500">
+        PENGHUNISURGA &copy; 2026 - Pengelola Keuangan Terintegrasi Google Apps Script
+    </footer>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // State Global Aplikasi
+        let currentType = 'Pemasukan';
+        let currentUser = null;
+        let gasEndpoint = '';
+        let transactions = [];
+        let cashflowChartInstance = null;
+
+        // Motivasi List
+        const motivations = [
+            "Menabung bukan soal berapa banyak uang yang kita sisakan, tapi konsistensi dalam menyisihkannya.",
+            "Jangan simpan apa yang tersisa setelah berbelanja, tetapi belanjakan apa yang tersisa setelah menabung.",
+            "Kekayaan bukanlah tentang memiliki banyak harta, tetapi memiliki kepuasan dan manajemen pengeluaran yang bijak.",
+            "Setiap nominal kecil yang ditabung hari ini adalah batu loncatan menuju kebebasan finansial masa depan.",
+            "Disiplin finansial hari ini adalah senyum ketenangan di masa tua."
+        ];
+
+        window.onload = function() {
+            // Set default date hari ini
+            document.getElementById('tx-date').valueAsDate = new Date();
+            
+            // Start Real-time Clock
+            setInterval(updateClock, 1000);
+            updateClock();
+            rotateMotivation();
+
+            // Cek session tersimpan
+            const savedUser = localStorage.getItem('ph_user');
+            const savedUrl = localStorage.getItem('ph_gas_url');
+            if (savedUser && savedUrl) {
+                currentUser = savedUser;
+                gasEndpoint = savedUrl;
+                document.getElementById('gas-url').value = savedUrl;
+                document.getElementById('display-user').innerText = savedUser;
+                document.getElementById('login-screen').classList.add('hidden');
+                document.getElementById('app-container').classList.remove('hidden');
+                fetchTransactions();
+            }
+        };
+
+        // Real-time Clock & Date
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('current-time').innerText = now.toTimeString().split(' ')[0];
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('current-date').innerText = now.toLocaleDateString('id-ID', options);
+        }
+
+        // Rotate Motivation
+        function rotateMotivation() {
+            const randomIndex = Math.floor(Math.random() * motivations.length);
+            document.getElementById('motivation-text').innerText = `"${motivations[randomIndex]}"`;
+        }
+
+        // Login Handler
+        async function handleLogin(e) {
+            e.preventDefault();
+            const url = document.getElementById('gas-url').value.trim();
+            const username = document.getElementById('login-username').value.trim();
+            const password = document.getElementById('login-password').value.trim();
+            const msgEl = document.getElementById('login-message');
+            
+            msgEl.innerText = "Menghubungkan ke Google Apps Script...";
+
+            try {
+                const res = await fetch(`${url}?action=login&username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`);
+                const data = await res.json();
+
+                if (data.status === 'success') {
+                    currentUser = username;
+                    gasEndpoint = url;
+                    localStorage.setItem('ph_user', username);
+                    localStorage.setItem('ph_gas_url', url);
+                    
+                    document.getElementById('display-user').innerText = username;
+                    document.getElementById('login-screen').classList.add('hidden');
+                    document.getElementById('app-container').classList.remove('hidden');
+                    fetchTransactions();
+                } else {
+                    msgEl.innerText = data.message || "Gagal login. Periksa kembali username/password.";
+                }
+            } catch (err) {
+                msgEl.innerText = "Koneksi gagal. Pastikan URL Web App benar & Deployment bersifat 'Anyone'.";
+                console.error(err);
+            }
+        }
+
+        // Logout Handler
+        function logout() {
+            localStorage.removeItem('ph_user');
+            location.reload();
+        }
+
+        // Set Transaction Type Button Active State
+        function setTxType(type) {
+            currentType = type;
+            const btnIn = document.getElementById('type-income');
+            const btnEx = document.getElementById('type-expense');
+            if (type === 'Pemasukan') {
+                btnIn.classList.add('active');
+                btnEx.classList.remove('active');
+            } else {
+                btnEx.classList.add('active');
+                btnIn.classList.remove('active');
+            }
+        }
+
+        // Fetch Transactions from Google Apps Script Backend
+        async function fetchTransactions() {
+            if (!gasEndpoint) return;
+            try {
+                const res = await fetch(`${gasEndpoint}?action=getTransactions`);
+                const data = await res.json();
+                if (data.status === 'success') {
+                    transactions = data.transactions || [];
+                    renderDashboard();
+                }
+            } catch (err) {
+                console.error("Gagal mengambil transaksi:", err);
+            }
+        }
+
+        // Add Transaction
+        async function handleAddTransaction(e) {
+            e.preventDefault();
+            const amount = parseFloat(document.getElementById('tx-amount').value);
+            const category = document.getElementById('tx-category').value;
+            const date = document.getElementById('tx-date').value;
+            const notes = document.getElementById('tx-notes').value;
+
+            const newTx = {
+                id: 'TX-' + Date.now(),
+                date: date,
+                type: currentType,
+                category: category,
+                amount: amount,
+                notes: notes
+            };
+
+            const submitBtn = document.getElementById('submit-tx-btn');
+            submitBtn.innerText = "Menyimpan ke Cloud...";
+            submitBtn.disabled = true;
+
+            try {
+                const res = await fetch(gasEndpoint, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: 'addTransaction',
+                        transaction: newTx
+                    })
+                });
+                const result = await res.json();
+                if (result.status === 'success') {
+                    document.getElementById('transaction-form').reset();
+                    document.getElementById('tx-date').valueAsDate = new Date();
+                    setTxType('Pemasukan');
+                    fetchTransactions();
+                } else {
+                    console.error("Gagal menyimpan: " + result.message);
+                }
+            } catch (err) {
+                console.error(err);
+            } finally {
+                submitBtn.innerText = "Simpan Transaksi";
+                submitBtn.disabled = false;
+            }
+        }
+
+        // Render Dashboard Metrics, Table, and Chart
+        function renderDashboard(filterQuery = '') {
+            let totalIncome = 0;
+            let totalExpense = 0;
+
+            const tbody = document.getElementById('transaction-table-body');
+            tbody.innerHTML = '';
+
+            const filtered = transactions.filter(tx => {
+                const q = filterQuery.toLowerCase();
+                return tx.category.toLowerCase().includes(q) || (tx.notes && tx.notes.toLowerCase().includes(q));
+            });
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-gray-400">Belum ada data transaksi tercatat.</td></tr>`;
+            }
+
+            // Hitung ringkasan dari keseluruhan transactions
+            transactions.forEach(tx => {
+                const amt = parseFloat(tx.amount) || 0;
+                if (tx.type === 'Pemasukan') totalIncome += amt;
+                else totalExpense += amt;
+            });
+
+            const balance = totalIncome - totalExpense;
+
+            document.getElementById('summary-balance').innerText = formatRupiah(balance);
+            document.getElementById('summary-income').innerText = formatRupiah(totalIncome);
+            document.getElementById('summary-expense').innerText = formatRupiah(totalExpense);
+
+            // Render Rows (urutkan terbaru di atas)
+            filtered.reverse().forEach(tx => {
+                const tr = document.createElement('tr');
+                tr.className = "border-b border-gray-300/40 hover:bg-gray-200/50 transition";
+                const isInc = tx.type === 'Pemasukan';
+                tr.innerHTML = `
+                    <td class="p-4 font-medium">${tx.date}</td>
+                    <td class="p-4 font-bold ${isInc ? 'text-emerald-600' : 'text-rose-600'}">${tx.type}</td>
+                    <td class="p-4">${tx.category}</td>
+                    <td class="p-4 font-semibold ${isInc ? 'text-emerald-600' : 'text-rose-600'}">${isInc ? '+' : '-'} ${formatRupiah(tx.amount)}</td>
+                    <td class="p-4 text-gray-500">${tx.notes || '-'}</td>
+                    <td class="p-4 text-center">
+                        <span class="text-xs text-gray-400 font-medium">Synced</span>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            renderChart();
+        }
+
+        function filterTransactions() {
+            const query = document.getElementById('search-tx').value;
+            renderDashboard(query);
+        }
+
+        function formatRupiah(num) {
+            return 'Rp ' + num.toLocaleString('id-ID');
+        }
+
+        // Render Chart.js
+        function renderChart() {
+            const ctx = document.getElementById('cashflowChart').getContext('2d');
+            
+            // Agregasi data per tanggal atau bulan sederhana
+            const dateMap = {};
+            transactions.forEach(tx => {
+                if (!dateMap[tx.date]) dateMap[tx.date] = { income: 0, expense: 0 };
+                if (tx.type === 'Pemasukan') dateMap[tx.date].income += parseFloat(tx.amount);
+                else dateMap[tx.date].expense += parseFloat(tx.amount);
+            });
+
+            const dates = Object.keys(dateMap).sort();
+            const incomeData = dates.map(d => dateMap[d].income);
+            const expenseData = dates.map(d => dateMap[d].expense);
+
+            if (cashflowChartInstance) {
+                cashflowChartInstance.destroy();
+            }
+
+            cashflowChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: dates.length > 0 ? dates : ['Hari Ini'],
+                    datasets: [
+                        {
+                            label: 'Pemasukan',
+                            data: incomeData.length > 0 ? incomeData : [0],
+                            backgroundColor: '#10b981',
+                            borderRadius: 6
+                        },
+                        {
+                            label: 'Pengeluaran',
+                            data: expenseData.length > 0 ? expenseData : [0],
+                            backgroundColor: '#f43f5e',
+                            borderRadius: 6
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                font: { family: 'Inter', size: 11 },
+                                boxWidth: 12
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { grid: { display: false } },
+                        y: { grid: { color: 'rgba(0,0,0,0.05)' } }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
